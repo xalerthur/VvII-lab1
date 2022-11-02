@@ -76,7 +76,7 @@ class Main(QWidget):
         self.pathFinder : tree.PathFinder = None
 
         self.curStep = 0
-
+        self.inCalc : bool = False
 
         self.sw_shuffle_btn.clicked.connect(lambda _ : self.shuffleTable(brds.Start))
         self.ew_shuffle_btn.clicked.connect(lambda _ : self.shuffleTable(brds.End))
@@ -119,6 +119,7 @@ class Main(QWidget):
             self.cur_step_le.setText("")
 
     def skipSteps(self, from_step, to_step):
+        if from_step == to_step : return
         if from_step < to_step:
             for i in range(from_step, to_step+1, 1):
                 self.changeStep(i, time=500/(abs(to_step-from_step)))
@@ -236,6 +237,11 @@ class Main(QWidget):
 
 
     def calc(self):
+        if self.inCalc:
+            self.pathFinder.no_abort = False
+
+            return
+
         func = None
         if self.mode == mode.BFS:
             func = tree.bfs
@@ -256,6 +262,8 @@ class Main(QWidget):
         self.thread.finished.connect(self.thread.deleteLater)
         self.pathFinder.changeParam.connect(self.changeTreeParam)
 
+        self.inCalc = True
+        self.calc_btn.setText("Cancel")
         self.thread.start()
         # self.pathFinder.makeTree()
 
@@ -264,6 +272,8 @@ class Main(QWidget):
         self.time_lbl.setText(str(time))
     
     def on_thread_finish(self):
+        self.inCalc = False
+        self.calc_btn.setText("Calc")
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Information)
         msgBox.setWindowTitle("Solution finder")
